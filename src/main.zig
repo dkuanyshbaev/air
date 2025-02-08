@@ -3,49 +3,48 @@ const assert = std.debug.assert;
 const print = std.debug.print;
 const http = std.http;
 const json = std.json;
-const testing = std.testing;
 
 const chiang_mai = "http://api.airvisual.com/v2/city?city=Chiang%20Mai&state=Chiang%20Mai&country=Thailand&key=bb42773c-315b-4570-83bc-6046a7a061fe";
 
-const Pollution = struct {
-    ts: []const u8,
-    aqius: u32,
-    mainus: []const u8,
-    aqicn: u32,
-    maincn: []const u8,
-};
-
-const Weather = struct {
-    ts: []const u8,
-    tp: u32,
-    pr: u32,
-    hu: u32,
-    ws: f32,
-    wd: u32,
-    ic: []const u8,
-};
-
-const Current = struct {
-    pollution: Pollution,
-    weather: Weather,
-};
-
-const Location = struct {
-    type: []const u8,
-    coordinates: []const f64,
-};
-
-const Data = struct {
-    city: []const u8,
-    state: []const u8,
-    country: []const u8,
-    location: Location,
-    current: Current,
-};
-
-const Info = struct {
+const ApiResponse = struct {
     status: []const u8,
     data: Data,
+
+    const Data = struct {
+        city: []const u8,
+        state: []const u8,
+        country: []const u8,
+        location: Location,
+        current: Current,
+
+        const Location = struct {
+            type: []const u8,
+            coordinates: []const f64,
+        };
+
+        const Current = struct {
+            pollution: Pollution,
+            weather: Weather,
+
+            const Pollution = struct {
+                ts: []const u8,
+                aqius: u32,
+                mainus: []const u8,
+                aqicn: u32,
+                maincn: []const u8,
+            };
+
+            const Weather = struct {
+                ts: []const u8,
+                tp: u32,
+                pr: u32,
+                hu: u32,
+                ws: f32,
+                wd: u32,
+                ic: []const u8,
+            };
+        };
+    };
 };
 
 pub fn main() !void {
@@ -74,11 +73,9 @@ pub fn main() !void {
     const body = try rdr.readAllAlloc(allocator, 1024 * 1024 * 4);
     defer allocator.free(body);
 
-    //print("{s}\n", .{body});
-
-    const parsed = try json.parseFromSlice(Info, allocator, body, .{});
+    const parsed = try json.parseFromSlice(ApiResponse, allocator, body, .{});
     defer parsed.deinit();
     const value = parsed.value;
 
-    print("{s}: {d}\n", .{value.data.city,value.data.current.pollution.aqius });
+    print("{s}: {d}\n", .{ value.data.city, value.data.current.pollution.aqius });
 }
